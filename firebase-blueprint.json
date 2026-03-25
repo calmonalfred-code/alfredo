@@ -1,0 +1,44 @@
+{
+  "entities": {
+    "feedback": {
+      "title": "Feedback de Orientação Clínica",
+      "description": "Avaliação do médico sobre a precisão e utilidade das sugestões da IA.",
+      "type": "object",
+      "properties": {
+        "guidanceId": {
+          "type": "string",
+          "description": "ID único da orientação gerada."
+        },
+        "rating": {
+          "type": "string",
+          "enum": ["positive", "negative"],
+          "description": "Avaliação positiva ou negativa."
+        },
+        "comment": {
+          "type": "string",
+          "description": "Comentário opcional do médico."
+        },
+        "userId": {
+          "type": "string",
+          "description": "UID do médico que forneceu o feedback."
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Data e hora do feedback."
+        },
+        "patientContext": {
+          "type": "object",
+          "description": "Resumo do contexto clínico para análise."
+        }
+      },
+      "required": ["guidanceId", "rating", "userId", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/feedback/{feedbackId}": {
+      "schema": "feedback",
+      "description": "Coleção de feedbacks dos médicos."
+    }
+  }
+}

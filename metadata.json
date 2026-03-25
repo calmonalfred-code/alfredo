@@ -1,0 +1,5 @@
+{
+  "name": "Clinical Conductor",
+  "description": "Sistema de suporte à decisão clínica alimentado por IA para consultas médicas rápidas.",
+  "requestFramePermissions": []
+}

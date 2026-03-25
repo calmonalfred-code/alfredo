@@ -1,0 +1,66 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: feedback
+    // Document ID: auto-generated
+    // Fields:
+    //   - guidanceId: string (required) - ID of the guidance
+    //   - rating: string (required, enum: positive, negative)
+    //   - comment: string (optional, max 1000 chars)
+    //   - userId: string (required) - UID of the physician
+    //   - timestamp: timestamp (required)
+    //   - patientContext: map (optional) - clinical context
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "calmon.alfred@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidFeedback(data) {
+      return data.keys().hasAll(['guidanceId', 'rating', 'userId', 'timestamp']) &&
+             data.guidanceId is string && data.guidanceId.size() > 0 && data.guidanceId.size() < 100 &&
+             data.rating in ['positive', 'negative'] &&
+             data.userId == request.auth.uid &&
+             data.timestamp is timestamp &&
+             (!('comment' in data) || (data.comment is string && data.comment.size() <= 1000));
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /feedback/{feedbackId} {
+      // Physicians can create feedback
+      allow create: if isAuthenticated() && isValidFeedback(request.resource.data);
+      
+      // Physicians can read their own feedback, admins can read all
+      allow read: if isOwner(resource.data.userId) || isAdmin();
+      
+      // Feedback is immutable once created
+      allow update, delete: if false;
+    }
+
+    // Default deny
+    match /{path=**} {
+      allow read, write: if false;
+    }
+  }
+}
